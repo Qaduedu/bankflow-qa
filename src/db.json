@@ -4,19 +4,39 @@
       "email": "eduardo@bankflow.com",
       "password": "$2a$10$gkXrqov.URbbH5x4bLTjGeEa.9mms5EoqHmGCcQDuNmXaXGrfUuD.",
       "id": 1
+    },
+    {
+      "email": "eduardo+1783120337@bankflow.com",
+      "password": "$2a$10$PQpToUMz1gUgc/aIIhVqmek49hWzJxsS0E1RPG2MfdrB3NcmZk.tK",
+      "id": 2
+    },
+    {
+      "email": "eduardo+1783120411@bankflow.com",
+      "password": "$2a$10$tvWhx9h5wRI63OKW9u4q6OCQA.kuBeTZ.m1eULTwZVRceIAbSFCry",
+      "id": 3
+    },
+    {
+      "email": "eduardo+1783120650@bankflow.com",
+      "password": "$2a$10$pBy5B3LuG0oOxXJ4XBtc8uFOjwFvNO/RcF3o1pnfMAxEaHN8E03ai",
+      "id": 4
+    },
+    {
+      "email": "eduardo+1783121292@bankflow.com",
+      "password": "$2a$10$c.t4hX3LBb1EHu9jiz1wH.WugEeb8DbW.pPfQCTHZwqHSF4hNdV3i",
+      "id": 5
     }
   ],
   "accounts": [
     {
       "id": "1",
       "owner": "Eduardo",
-      "balance": 900,
+      "balance": 100,
       "pixKey": "eduardo@pix.com"
     },
     {
       "id": "2",
       "owner": "Maria",
-      "balance": 600,
+      "balance": 1400,
       "pixKey": "maria@pix.com"
     }
   ],
@@ -28,6 +48,70 @@
       "amount": 100,
       "status": "COMPLETED",
       "timestamp": "2026-07-03T22:24:14.509Z"
+    },
+    {
+      "id": "1783118188413",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 100,
+      "status": "COMPLETED",
+      "timestamp": "2026-07-03T22:36:28.414Z"
+    },
+    {
+      "id": "1783118233499",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 100,
+      "status": "COMPLETED",
+      "timestamp": "2026-07-03T22:37:13.499Z"
+    },
+    {
+      "id": "1783118277918",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 100,
+      "status": "COMPLETED",
+      "timestamp": "2026-07-03T22:37:57.918Z"
+    },
+    {
+      "id": "1783118409628",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 100,
+      "status": "COMPLETED",
+      "timestamp": "2026-07-03T22:40:09.628Z"
+    },
+    {
+      "id": "1783118421798",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 100,
+      "status": "COMPLETED",
+      "timestamp": "2026-07-03T22:40:21.798Z"
+    },
+    {
+      "id": "1783119238468",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 100,
+      "status": "COMPLETED",
+      "timestamp": "2026-07-03T22:53:58.468Z"
+    },
+    {
+      "id": "1783119697480",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 100,
+      "status": "COMPLETED",
+      "timestamp": "2026-07-03T23:01:37.480Z"
+    },
+    {
+      "id": "1783121292803",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 100,
+      "status": "COMPLETED",
+      "timestamp": "2026-07-03T23:28:12.804Z"
     }
   ]
 }
