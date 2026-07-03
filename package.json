@@ -1,0 +1,30 @@
+{
+  "name": "bankflow-qa",
+  "version": "1.0.0",
+  "description": "Simulação de API bancária REST com transferências Pix, construída para demonstrar um fluxo completo de Quality Assurance: planejamento, design de casos de teste, automação e integração contínua — sobre um sistema com lógica de negócio real (não apenas CRUD).",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Qaduedu/bankflow-qa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Qaduedu/bankflow-qa/issues"
+  },
+  "homepage": "https://github.com/Qaduedu/bankflow-qa#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "json-server": "^0.17.4",
+    "json-server-auth": "^2.1.0"
+  }
+}

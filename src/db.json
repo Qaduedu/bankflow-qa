@@ -1,0 +1,8 @@
+{
+  "users": [],
+  "accounts": [
+    { "id": "1", "owner": "Eduardo", "balance": 1000, "pixKey": "eduardo@pix.com" },
+    { "id": "2", "owner": "Maria", "balance": 500, "pixKey": "maria@pix.com" }
+  ],
+  "transactions": []
+}
