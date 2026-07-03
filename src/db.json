@@ -1,8 +1,33 @@
 {
-  "users": [],
-  "accounts": [
-    { "id": "1", "owner": "Eduardo", "balance": 1000, "pixKey": "eduardo@pix.com" },
-    { "id": "2", "owner": "Maria", "balance": 500, "pixKey": "maria@pix.com" }
+  "users": [
+    {
+      "email": "eduardo@bankflow.com",
+      "password": "$2a$10$gkXrqov.URbbH5x4bLTjGeEa.9mms5EoqHmGCcQDuNmXaXGrfUuD.",
+      "id": 1
+    }
   ],
-  "transactions": []
+  "accounts": [
+    {
+      "id": "1",
+      "owner": "Eduardo",
+      "balance": 900,
+      "pixKey": "eduardo@pix.com"
+    },
+    {
+      "id": "2",
+      "owner": "Maria",
+      "balance": 600,
+      "pixKey": "maria@pix.com"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "1783117454508",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 100,
+      "status": "COMPLETED",
+      "timestamp": "2026-07-03T22:24:14.509Z"
+    }
+  ]
 }
