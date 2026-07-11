@@ -35,16 +35,21 @@ jobs:
         run: npm install
 
       # Sobe a API em segundo plano (o "&" impede que o comando trave o workflow)
-      - name: Subir a API
-        run: npm start &
+      - name: Resetar banco
+        run: node scripts/reset-db.js
+
 
       # Da um tempo para a API terminar de subir antes de rodar os testes
+      - name: Subir API
+        run: snpm start &
+
+      # 4. O QUE executar - a suite completa (o "pretest" reseta o banco sozinho antes)
       - name: Aguardar API iniciar
         run: sleep 5
 
-      # 4. O QUE executar - a suite completa (o "pretest" reseta o banco sozinho antes)
-      - name: Rodar testes automatizados (Newman)
-        run: npm test
+      - name: Rodar testes Automatizados
+        run: npm test --ignore-scripts
+      
 
       # Guarda o relatorio HTML como um arquivo baixavel, mesmo se os testes falharem
       - name: Publicar relatorio de testes
