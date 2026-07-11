@@ -1,33 +1,49 @@
 {
   "users": [
     {
-      "email": "eduardo+1783125204845@bankflow.com",
-      "password": "$2a$10$0rMT7BlIafZycrezj5eaJeJWOsBq6K0uNcQwTrVX..G7ch7fW.xSa",
-      "id": 1
+      "id": "1",
+      "email": "eduardo@bankflow.com",
+      "password": "$2a$10$RQBgXJ5mro.5QjbqWFzpyuKMQS.KtEvOOuxcLJYkA1lm0yU3eDCka"
+    },
+    {
+      "email": "eduardo+1783786955853@bankflow.com",
+      "password": "$2a$10$sUWsIpnymC8/rJQcjvQ9Qu/SeGgmNbJaXbOB2ema19JOLup6Is1Eq",
+      "id": "vMeXpG8"
     }
   ],
   "accounts": [
     {
       "id": "1",
       "owner": "Eduardo",
-      "balance": 900,
-      "pixKey": "eduardo@pix.com"
+      "balance": 850,
+      "pixKey": "eduardo@pix.com",
+      "userId": "1"
     },
     {
       "id": "2",
       "owner": "Maria",
-      "balance": 600,
-      "pixKey": "maria@pix.com"
+      "balance": 650,
+      "pixKey": "maria@pix.com",
+      "userId": "2"
     }
   ],
   "transactions": [
     {
-      "id": "1783125205526",
+      "id": "178378695670936b1",
       "fromAccountId": "1",
       "toAccountId": "2",
       "amount": 100,
       "status": "COMPLETED",
-      "timestamp": "2026-07-04T00:33:25.526Z"
+      "timestamp": "2026-07-11T16:22:36.709Z"
+    },
+    {
+      "id": "17837869588900328",
+      "fromAccountId": "1",
+      "toAccountId": "2",
+      "amount": 50,
+      "status": "COMPLETED",
+      "idempotencyKey": "chave-teste-001",
+      "timestamp": "2026-07-11T16:22:38.890Z"
     }
   ]
 }

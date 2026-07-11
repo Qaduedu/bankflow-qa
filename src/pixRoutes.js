@@ -1,18 +1,19 @@
-// pixRoutes.js
-// Simula a lógica de negócio de uma transferência Pix sobre o db.json do json-server.
-// Por que um router separado? Porque json-server não tem lugar nativo pra regra de
-// negócio - ele só faz CRUD. Isolar essa lógica aqui também facilita escrever testes
-// unitários nela no futuro, sem precisar subir o servidor inteiro.
+// pixRoutes.js (v2)
+// Simula a logica de negocio de uma transferencia Pix sobre o db.json.
+// Nesta versao: autenticacao JWT verificada manualmente (necessario porque
+// json-server-auth nao guarda rotas customizadas automaticamente),
+// autorizacao (correcao de IDOR), limite noturno, idempotencia, e lock de
+// concorrencia por conta. Ver decisions/006, 007 e 008.
 
 const express = require('express');
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET_KEY } = require('json-server-auth/dist/constants');
 const router = express.Router();
 
-// Taxa de falha simulada do "provedor Pix" (10%).
-// Por que existir? Porque em produção, Pix depende do Banco Central e de outros
-// bancos - falhas de rede/timeout são reais e esperadas. Um QA sério precisa
-// garantir que o sistema se comporta bem quando o provedor falha, não só no
-// caminho feliz.
 const FAULT_INJECTION_RATE = 0.1;
+const NIGHT_LIMIT_AMOUNT = 1000;
+const NIGHT_START_HOUR = 20;
+const NIGHT_END_HOUR = 6;
 
 function randomDelay(min = 50, max = 400) {
   return new Promise((resolve) =>
@@ -23,7 +24,7 @@ function randomDelay(min = 50, max = 400) {
 function logTransaction(db, data) {
   const transactions = db.get('transactions');
   const transaction = {
-    id: Date.now().toString(),
+    id: Date.now().toString() + Math.random().toString(16).slice(2, 6),
     ...data,
     timestamp: new Date().toISOString(),
   };
@@ -31,76 +32,152 @@ function logTransaction(db, data) {
   return transaction;
 }
 
-module.exports = (db) => {
-  router.post('/pix/transfer', async (req, res) => {
-    const { fromAccountId, pixKey, amount } = req.body;
+function isNightTime(date = new Date()) {
+  const hour = date.getHours();
+  return hour >= NIGHT_START_HOUR || hour < NIGHT_END_HOUR;
+}
 
-    // 1. Validação de payload - primeira linha de defesa
+// Autenticacao manual: confirma que o token existe, e valido, e nao expirou.
+// Anexa o payload decodificado (contem "sub", o id do usuario) em req.user.
+function authenticate(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      error: 'UNAUTHORIZED',
+      message: 'Token de autenticacao ausente ou mal formatado.',
+    });
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    req.user = jwt.verify(token, JWT_SECRET_KEY);
+    next();
+  } catch (err) {
+    return res.status(401).json({
+      error: 'UNAUTHORIZED',
+      message: 'Token invalido ou expirado.',
+    });
+  }
+}
+
+// Lock em memoria por conta - serializa operacoes que leem e escrevem saldo
+// da mesma conta, evitando race condition durante o await de latencia.
+const accountLocks = new Map();
+
+function withAccountLock(accountId, task) {
+  const previous = accountLocks.get(accountId) || Promise.resolve();
+  const current = previous.then(task, task);
+  accountLocks.set(
+    accountId,
+    current.catch(() => {})
+  );
+  return current;
+}
+
+module.exports = (db) => {
+  router.post('/pix/transfer', authenticate, async (req, res) => {
+    const { fromAccountId, pixKey, amount } = req.body;
+    const idempotencyKey = req.headers['idempotency-key'];
+
     if (!fromAccountId || !pixKey || typeof amount !== 'number' || amount <= 0) {
       return res.status(400).json({
         error: 'INVALID_PAYLOAD',
-        message: 'fromAccountId, pixKey e amount (numérico > 0) são obrigatórios.',
+        message: 'fromAccountId, pixKey e amount (numerico > 0) sao obrigatorios.',
       });
     }
 
-    await randomDelay(); // simula latência de rede/processamento real
-
-    const accounts = db.get('accounts');
-    const fromAccount = accounts.find({ id: fromAccountId }).value();
-    const toAccount = accounts.find({ pixKey }).value();
-
-    if (!fromAccount) {
-      return res.status(404).json({
-        error: 'ORIGIN_NOT_FOUND',
-        message: 'Conta de origem não encontrada.',
-      });
-    }
-    if (!toAccount) {
-      return res.status(404).json({
-        error: 'DESTINATION_NOT_FOUND',
-        message: 'Chave Pix de destino não encontrada.',
-      });
-    }
-    if (fromAccount.id === toAccount.id) {
-      return res.status(400).json({
-        error: 'SAME_ACCOUNT_TRANSFER',
-        message: 'Não é possível transferir para a própria conta.',
-      });
-    }
-    if (fromAccount.balance < amount) {
-      return res.status(422).json({
-        error: 'INSUFFICIENT_FUNDS',
-        message: 'Saldo insuficiente para realizar a transferência.',
-      });
+    // Idempotencia: se essa chave ja foi processada, devolve o mesmo
+    // resultado anterior em vez de repetir a transferencia.
+    if (idempotencyKey) {
+      const existing = db.get('transactions').find({ idempotencyKey }).value();
+      if (existing) {
+        return res.status(200).json({ ...existing, idempotent: true });
+      }
     }
 
-    // 2. Fault injection - simula instabilidade real do provedor Pix
-    if (Math.random() < FAULT_INJECTION_RATE) {
-      logTransaction(db, {
-        fromAccountId,
+    await randomDelay();
+
+    const result = await withAccountLock(fromAccountId, () => {
+      const accounts = db.get('accounts');
+      const fromAccount = accounts.find({ id: fromAccountId }).value();
+
+      if (!fromAccount) {
+        return {
+          status: 404,
+          body: { error: 'ORIGIN_NOT_FOUND', message: 'Conta de origem nao encontrada.' },
+        };
+      }
+      
+      
+      // Autorizacao (correcao de IDOR): o dono do token precisa ser o dono
+      // da conta de origem, nao basta estar autenticado como alguem.
+      {if (String(fromAccount.userId) !== String(req.user.sub)) 
+        return {
+          status: 403,
+          body: {
+            error: 'FORBIDDEN',
+            message: 'Voce nao tem permissao para transferir a partir desta conta.',
+          },
+        };
+      }
+
+      const toAccount = accounts.find({ pixKey }).value();
+      if (!toAccount) {
+        return {
+          status: 404,
+          body: { error: 'DESTINATION_NOT_FOUND', message: 'Chave Pix de destino nao encontrada.' },
+        };
+      }
+      if (fromAccount.id === toAccount.id) {
+        return {
+          status: 400,
+          body: { error: 'SAME_ACCOUNT_TRANSFER', message: 'Nao e possivel transferir para a propria conta.' },
+        };
+      }
+      if (fromAccount.balance < amount) {
+        return {
+          status: 422,
+          body: { error: 'INSUFFICIENT_FUNDS', message: 'Saldo insuficiente para realizar a transferencia.' },
+        };
+      }
+      if (isNightTime() && amount > NIGHT_LIMIT_AMOUNT) {
+        return {
+          status: 403,
+          body: {
+            error: 'NIGHT_LIMIT_EXCEEDED',
+            message: `Fora do horario comercial (20h-6h), o limite por transferencia e de R$ ${NIGHT_LIMIT_AMOUNT}.`,
+          },
+        };
+      }
+
+      if (Math.random() < FAULT_INJECTION_RATE) {
+        logTransaction(db, {
+          fromAccountId,
+          toAccountId: toAccount.id,
+          amount,
+          status: 'FAILED_SIMULATED_FAULT',
+          idempotencyKey,
+        });
+        return {
+          status: 500,
+          body: { error: 'PIX_PROVIDER_UNAVAILABLE', message: 'Falha simulada no provedor Pix. Tente novamente.' },
+        };
+      }
+
+      accounts.find({ id: fromAccount.id }).assign({ balance: fromAccount.balance - amount }).write();
+      accounts.find({ id: toAccount.id }).assign({ balance: toAccount.balance + amount }).write();
+
+      const transaction = logTransaction(db, {
+        fromAccountId: fromAccount.id,
         toAccountId: toAccount.id,
         amount,
-        status: 'FAILED_SIMULATED_FAULT',
+        status: 'COMPLETED',
+        idempotencyKey,
       });
-      return res.status(500).json({
-        error: 'PIX_PROVIDER_UNAVAILABLE',
-        message: 'Falha simulada no provedor Pix. Tente novamente.',
-      });
-    }
 
-    // 3. Executa a transferência (atomicidade simulada: as duas escritas
-    // acontecem em sequência síncrona no lowdb, sem outra requisição no meio)
-    accounts.find({ id: fromAccount.id }).assign({ balance: fromAccount.balance - amount }).write();
-    accounts.find({ id: toAccount.id }).assign({ balance: toAccount.balance + amount }).write();
-
-    const transaction = logTransaction(db, {
-      fromAccountId: fromAccount.id,
-      toAccountId: toAccount.id,
-      amount,
-      status: 'COMPLETED',
+      return { status: 201, body: transaction };
     });
 
-    return res.status(201).json(transaction);
+    return res.status(result.status).json(result.body);
   });
 
   return router;

@@ -1,8 +1,19 @@
 {
-  "users": [],
-  "accounts": [
-    { "id": "1", "owner": "Eduardo", "balance": 1000, "pixKey": "eduardo@pix.com" },
-    { "id": "2", "owner": "Maria", "balance": 500, "pixKey": "maria@pix.com" }
+
+  "users": [
+
+    { "id": "1", "email": "eduardo@bankflow.com", "password": "$2a$10$RQBgXJ5mro.5QjbqWFzpyuKMQS.KtEvOOuxcLJYkA1lm0yU3eDCka" }
+
   ],
+
+  "accounts": [
+
+    { "id": "1", "owner": "Eduardo", "balance": 1000, "pixKey": "eduardo@pix.com", "userId": "1" },
+
+    { "id": "2", "owner": "Maria", "balance": 500, "pixKey": "maria@pix.com", "userId": "2" }
+
+  ],
+
   "transactions": []
+
 }
