@@ -40,7 +40,7 @@ jobs:
 
       # Da um tempo para a API terminar de subir antes de rodar os testes
       - name: Aguardar API iniciar
-         run: sleep 5
+        run: sleep 5
 
       # 4. O QUE executar - a suite completa (o "pretest" reseta o banco sozinho antes)
       - name: Rodar testes automatizados (Newman)
