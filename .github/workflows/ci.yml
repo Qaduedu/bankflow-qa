@@ -1,0 +1,55 @@
+# .github/workflows/ci.yml
+#
+# Roda a suite de testes automatizados (Newman) toda vez que houver um push
+# ou pull request para a branch main. Isso é o que fecha o ciclo de
+# "manutencao continua de qualidade": ninguem precisa lembrar de rodar os
+# testes manualmente - o GitHub faz isso sozinho, sempre.
+
+name: CI - BankFlow QA
+
+# 1. QUANDO rodar
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    # 2. ONDE rodar - uma maquina virtual limpa, criada do zero pra essa execucao
+    runs-on: ubuntu-latest
+
+    steps:
+      # Baixa o codigo do repositorio para dentro dessa maquina virtual
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      # 3. O QUE instalar - Node.js na mesma versao usada no desenvolvimento
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Instala todas as dependencias do projeto (json-server, express, etc.)
+      - name: Instalar dependencias
+        run: npm install
+
+      # Sobe a API em segundo plano (o "&" impede que o comando trave o workflow)
+      - name: Subir a API
+        run: npm start &
+
+      # Da um tempo para a API terminar de subir antes de rodar os testes
+      - name: Aguardar a API responder
+        run: sleep 5
+
+      # 4. O QUE executar - a suite completa (o "pretest" reseta o banco sozinho antes)
+      - name: Rodar testes automatizados (Newman)
+        run: npm test
+
+      # Guarda o relatorio HTML como um arquivo baixavel, mesmo se os testes falharem
+      - name: Publicar relatorio de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: reports/newman/report.html
