@@ -10,7 +10,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET_KEY } = require('json-server-auth/dist/constants');
 const router = express.Router();
 
-const FAULT_INJECTION_RATE = 0.1;
+
 const NIGHT_LIMIT_AMOUNT = 1000;
 const NIGHT_START_HOUR = 20;
 const NIGHT_END_HOUR = 6;
@@ -84,7 +84,13 @@ module.exports = (db) => {
         message: 'fromAccountId, pixKey e amount (numerico > 0) sao obrigatorios.',
       });
     }
+    console.log("IDEMPOTENCY:", idempotencyKey);
 
+console.log(
+  db.get("transactions")
+    .filter({ idempotencyKey })
+    .value()
+);
     // Idempotencia: se essa chave ja foi processada, devolve o mesmo
     // resultado anterior em vez de repetir a transferencia.
     if (idempotencyKey) {
@@ -149,19 +155,7 @@ module.exports = (db) => {
         };
       }
 
-      if (Math.random() < FAULT_INJECTION_RATE) {
-        logTransaction(db, {
-          fromAccountId,
-          toAccountId: toAccount.id,
-          amount,
-          status: 'FAILED_SIMULATED_FAULT',
-          idempotencyKey,
-        });
-        return {
-          status: 500,
-          body: { error: 'PIX_PROVIDER_UNAVAILABLE', message: 'Falha simulada no provedor Pix. Tente novamente.' },
-        };
-      }
+     
 
       accounts.find({ id: fromAccount.id }).assign({ balance: fromAccount.balance - amount }).write();
       accounts.find({ id: toAccount.id }).assign({ balance: toAccount.balance + amount }).write();

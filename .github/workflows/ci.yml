@@ -39,8 +39,13 @@ jobs:
         run: npm start &
 
       # Da um tempo para a API terminar de subir antes de rodar os testes
-      - name: Aguardar a API responder
-        run: sleep 5
+      - name: Esperar API iniciar
+              run: |
+              for i in {1..20}; do
+              curl -f http://localhost:3000/health && exit 0
+              sleep 1
+              done
+             exit 1
 
       # 4. O QUE executar - a suite completa (o "pretest" reseta o banco sozinho antes)
       - name: Rodar testes automatizados (Newman)

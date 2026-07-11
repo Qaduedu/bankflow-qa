@@ -156,7 +156,13 @@
           ]
         },
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Idempotency-Key",
+            "value": "{{$guid}}",
+            "type": "text"
+          }
+        ],
         "body": {
           "mode": "raw",
           "raw": "{\r\n  \"fromAccountId\": \"1\",\r\n  \"pixKey\": \"maria@pix.com\",\r\n  \"amount\": 100\r\n}",

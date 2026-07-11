@@ -14,3 +14,6 @@ server.use(pixRoutes(server.db));
 server.use(router);
 
 server.listen(3000, () => console.log('BankFlow QA API rodando em http://localhost:3000'));
+server.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
